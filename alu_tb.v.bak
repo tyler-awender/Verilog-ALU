@@ -1,0 +1,103 @@
+// Name: alu_tb.v
+// Testbench for ALU
+
+`timescale 1ns / 1ps
+`include "prj_definition.v"  // Assuming this file defines `DATA_INDEX_LIMIT` and `ALU_OPRN_INDEX_LIMIT`
+
+module ALU_TB_CGP;
+
+// Inputs to the ALU module
+reg [`DATA_INDEX_LIMIT:0] OP1;
+reg [`DATA_INDEX_LIMIT:0] OP2;
+reg [`ALU_OPRN_INDEX_LIMIT:0] OPRN;
+
+// Outputs from the ALU module
+wire [`DATA_INDEX_LIMIT:0] OUT;
+wire ZERO;
+
+// Instantiate the ALU module
+ALU alu_instance (
+    .OUT(OUT),
+    .ZERO(ZERO),
+    .OP1(OP1),
+    .OP2(OP2),
+    .OPRN(OPRN)
+);
+
+// Task to run a test case
+task run_test;
+    input [`DATA_INDEX_LIMIT:0] operand1;
+    input [`DATA_INDEX_LIMIT:0] operand2;
+    input [`ALU_OPRN_INDEX_LIMIT:0] operation;
+    input [`DATA_INDEX_LIMIT:0] expected_result;
+    reg [8*8:1] operation_str;
+    begin
+        // Assign inputs
+        OP1 = operand1;
+        OP2 = operand2;
+        OPRN = operation;
+
+        // Wait for combinational logic to settle
+        #10;
+
+        // Operation description for better readability
+        case (operation)
+            `ALU_OPRN_WIDTH'h01: operation_str = "ADD";
+            `ALU_OPRN_WIDTH'h02: operation_str = "SUB";
+            `ALU_OPRN_WIDTH'h03: operation_str = "MUL";
+            `ALU_OPRN_WIDTH'h04: operation_str = "SHR";
+            `ALU_OPRN_WIDTH'h05: operation_str = "SHL";
+            `ALU_OPRN_WIDTH'h06: operation_str = "AND";
+            `ALU_OPRN_WIDTH'h07: operation_str = "OR";
+            `ALU_OPRN_WIDTH'h08: operation_str = "NOR";
+            `ALU_OPRN_WIDTH'h09: operation_str = "SLT";
+            default: operation_str = "UNKNOWN";
+        endcase
+
+        // Check the result
+        if (OUT === expected_result) begin
+            $display("[TEST] %s: %d %s %d = %d, got %d ... [PASSED]", operation_str, operand1, operation_str, operand2, expected_result, OUT);
+        end else begin
+            $display("[TEST] %s: %d %s %d = %d, got %d ... [FAILED]", operation_str, operand1, operation_str, operand2, expected_result, OUT);
+        end
+    end
+endtask
+
+// Initial block to run test cases
+initial begin
+    // Test case 1: Addition (0x1)
+    run_test(15, 3, `ALU_OPRN_WIDTH'h01, 18);
+
+    // Test case 2: Subtraction (0x2)
+    run_test(15, 5, `ALU_OPRN_WIDTH'h02, 10);
+
+    // Test case 3: Multiplication (0x3)
+    run_test(4, 5, `ALU_OPRN_WIDTH'h03, 20);
+
+    // Test case 4: Shift Right (0x4)
+    run_test(16, 2, `ALU_OPRN_WIDTH'h04, 4);
+
+    // Test case 5: Shift Left (0x5)
+    run_test(3, 2, `ALU_OPRN_WIDTH'h05, 12);
+
+    // Test case 6: Bitwise AND (0x6)
+    run_test(15, 8, `ALU_OPRN_WIDTH'h06, 8);
+
+    // Test case 7: Bitwise OR (0x7)
+    run_test(15, 8, `ALU_OPRN_WIDTH'h07, 15);
+
+    // Test case 8: Bitwise NOR (0x8)
+    run_test(15, 8, `ALU_OPRN_WIDTH'h08, ~15 & ~8);  // Should equal the NOR result
+
+    // Test case 9: Set Less Than (0x9)
+    run_test(3, 5, `ALU_OPRN_WIDTH'h09, 1);
+
+    // Test case 10: Set Less Than, should be zero (0x9)
+    run_test(5, 3, `ALU_OPRN_WIDTH'h09, 0);
+
+    // End the simulation
+    $finish;
+end
+
+endmodule
+

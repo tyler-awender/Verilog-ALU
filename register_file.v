@@ -1,0 +1,91 @@
+// Name: register_file.v
+// Module: REGISTER_FILE_32x32
+// Input:  DATA_W : Data to be written at address ADDR_W
+//         ADDR_W : Address of the memory location to be written
+//         ADDR_R1 : Address of the memory location to be read for DATA_R1
+//         ADDR_R2 : Address of the memory location to be read for DATA_R2
+//         READ    : Read signal
+//         WRITE   : Write signal
+//         CLK     : Clock signal
+//         RST     : Reset signal
+// Output: DATA_R1 : Data at ADDR_R1 address
+//         DATA_R2 : Data at ADDR_R2 address
+//
+// Notes: - 32 bit word accessible dual read register file having 32 registers.
+//        - Reset is done at -ve edge of the RST signal
+//        - Rest of the operation is done at the +ve edge of the CLK signal
+//        - Read operation is done if READ=1 and WRITE=0
+//        - Write operation is done if WRITE=1 and READ=0
+//        - X is the value at DATA_R* if both READ and WRITE are 0 or 1
+//
+// Revision History:
+//
+// Version	Date		Who		email			note
+//------------------------------------------------------------------------------------------
+//  1.0     Sep 10, 2014	Kaushik Patra	kpatra@sjsu.edu		Initial creation
+//  1.1     November 26, 2024	Tyler Awender	tyler.awender@sjsu.edu	Added functionality
+//------------------------------------------------------------------------------------------
+//
+`include "prj_definition.v"
+module REGISTER_FILE_32x32(DATA_R1, DATA_R2, ADDR_R1, ADDR_R2, 
+                            DATA_W, ADDR_W, READ, WRITE, CLK, RST);
+
+// input list
+input READ, WRITE, CLK, RST;
+input [`DATA_INDEX_LIMIT:0] DATA_W;
+input [`REG_ADDR_INDEX_LIMIT:0] ADDR_R1, ADDR_R2, ADDR_W;
+
+// output list
+output reg [`DATA_INDEX_LIMIT:0] DATA_R1;
+output reg [`DATA_INDEX_LIMIT:0] DATA_R2;
+
+// reg file bank
+reg [`DATA_INDEX_LIMIT:0] memory_bank [0:`REG_INDEX_LIMIT];
+integer counter;
+
+// set regs to zero
+initial
+begin
+	// Initialize all registers
+	for (counter = 1; counter < `REG_INDEX_LIMIT; counter = counter + 1)
+	begin
+		memory_bank[counter] = {`DATA_WIDTH{1'b0}}; // fill with 0s
+	end
+end
+
+// reset block
+// on negative edge. reset all regs to 0
+always @(negedge RST)
+	begin: RESET_BLOCK
+	for (counter = 1; counter < `REG_INDEX_LIMIT; counter = counter + 1)
+	begin
+    		memory_bank[counter] <= {`DATA_WIDTH{1'b0}}; // nonblocking assignment
+  	end
+end
+
+// write and read block
+always @(posedge CLK)
+begin: READ_WRITE_BLOCK
+	// if write == 1 and if read == 0
+  	if (WRITE && !READ) 
+	begin: WRITE_BLOCK
+   		 memory_bank[ADDR_W] <= DATA_W; // store data at specified address
+  	end
+
+	// if read == 1 and write == 0
+	else if (READ && !WRITE) 
+	begin: READ_BLOCK
+    		DATA_R1 = memory_bank[ADDR_R1]; // read from first address
+    		DATA_R2 = memory_bank[ADDR_R2]; // read from second address
+  	end
+	// invalid operation
+	else 
+	begin: SET_UNDEFINED
+		// set outputs to undefined state
+    		DATA_R1 = {`DATA_WIDTH{1'bx}};
+    		DATA_R2 = {`DATA_WIDTH{1'bx}};
+  	end
+end
+endmodule
+
+

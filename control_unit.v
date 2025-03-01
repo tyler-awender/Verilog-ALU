@@ -1,0 +1,447 @@
+// Name: control_unit.v
+// Module: CONTROL_UNIT
+// Output: RF_DATA_W  : Data to be written at register file address RF_ADDR_W
+//         RF_ADDR_W  : Register file address of the memory location to be written
+//         RF_ADDR_R1 : Register file address of the memory location to be read for RF_DATA_R1
+//         RF_ADDR_R2 : Registere file address of the memory location to be read for RF_DATA_R2
+//         RF_READ    : Register file Read signal
+//         RF_WRITE   : Register file Write signal
+//         ALU_OP1    : ALU operand 1
+//         ALU_OP2    : ALU operand 2
+//         ALU_OPRN   : ALU operation code
+//         MEM_ADDR   : Memory address to be read in
+//         MEM_READ   : Memory read signal
+//         MEM_WRITE  : Memory write signal
+//         
+// Input:  RF_DATA_R1 : Data at ADDR_R1 address
+//         RF_DATA_R2 : Data at ADDR_R1 address
+//         ALU_RESULT    : ALU output data
+//         CLK        : Clock signal
+//         RST        : Reset signal
+//
+// INOUT: MEM_DATA    : Data to be read in from or write to the memory
+//
+// Notes: - Control unit synchronize operations of a processor
+//
+// Revision History:
+//
+// Version	Date		Who		email			note
+//------------------------------------------------------------------------------------------
+//  1.0     Sep 10, 2014	Kaushik Patra	kpatra@sjsu.edu		Initial creation
+//  1.1     Oct 19, 2014        Kaushik Patra   kpatra@sjsu.edu         Added ZERO status output
+//  1.2	    Nov 26, 2024	Tyler Awender	tyler.awender@sjsu.edu	Added functionality
+//------------------------------------------------------------------------------------------
+`include "prj_definition.v"
+module CONTROL_UNIT(MEM_DATA, RF_DATA_W, RF_ADDR_W, RF_ADDR_R1, RF_ADDR_R2, RF_READ, RF_WRITE,
+                    ALU_OP1, ALU_OP2, ALU_OPRN, MEM_ADDR, MEM_READ, MEM_WRITE,
+                    RF_DATA_R1, RF_DATA_R2, ALU_RESULT, ZERO, CLK, RST); 
+
+// Output signals
+// Outputs for register file 
+output [`DATA_INDEX_LIMIT:0] RF_DATA_W;
+output [`ADDRESS_INDEX_LIMIT:0] RF_ADDR_W, RF_ADDR_R1, RF_ADDR_R2;
+output RF_READ, RF_WRITE;
+// Outputs for ALU
+output [`DATA_INDEX_LIMIT:0]  ALU_OP1, ALU_OP2;
+output  [`ALU_OPRN_INDEX_LIMIT:0] ALU_OPRN;
+// Outputs for memory
+output [`ADDRESS_INDEX_LIMIT:0]  MEM_ADDR;
+output MEM_READ, MEM_WRITE;
+
+// Input signals
+input [`DATA_INDEX_LIMIT:0] RF_DATA_R1, RF_DATA_R2, ALU_RESULT;
+input ZERO, CLK, RST;
+
+// Inout signal
+inout [`DATA_INDEX_LIMIT:0] MEM_DATA;
+
+// State nets
+wire [2:0] proc_state;
+
+PROC_SM state_machine(.STATE(proc_state),.CLK(CLK),.RST(RST));
+
+// Connecting output registers
+reg [`DATA_INDEX_LIMIT:0] rf_data_w;
+reg [`ADDRESS_INDEX_LIMIT:0] rf_addr_w, rf_addr_r1, rf_addr_r2;
+reg rf_read, rf_write;
+reg [`DATA_INDEX_LIMIT:0] alu_op1, alu_op2;
+reg [`ALU_OPRN_INDEX_LIMIT:0] alu_oprn;
+reg [`ADDRESS_INDEX_LIMIT:0]  mem_addr;
+reg mem_read, mem_write;
+
+assign RF_DATA_W = rf_data_w;
+assign RF_ADDR_W = rf_addr_w;
+assign {RF_ADDR_R1, RF_ADDR_R2} = {rf_addr_r1, rf_addr_r2};
+assign {RF_READ, RF_WRITE} = {rf_read, rf_write};
+assign {ALU_OP1, ALU_OP2} = {alu_op1, alu_op2};
+assign ALU_OPRN = alu_oprn;
+assign MEM_ADDR = mem_addr;
+assign {MEM_READ, MEM_WRITE} = {mem_read, mem_write};
+
+// Register for inout MEM_DATA
+reg [`DATA_INDEX_LIMIT:0] mem_data;
+assign MEM_DATA = (MEM_READ & ~MEM_WRITE) ? 'Z : mem_data;
+
+// registers
+reg [5:0]   opcode;
+reg [4:0]   rs;
+reg [4:0]   rt;
+reg [4:0]   rd;
+reg [4:0]   shamt;
+reg [5:0]   funct;
+reg [15:0]  immediate;
+reg [25:0]  address;
+
+// extra registers
+reg [`DATA_INDEX_LIMIT:0] program_counter, instruction_register, stack_pointer;
+
+// for modified parameters
+reg [`DATA_INDEX_LIMIT:0] sign_extended_imm, zero_extended_imm, upper_immediate, branch_target;
+
+always @ (proc_state)
+begin
+    // initialize registers on reset
+    if (~RST)
+    begin
+        program_counter = `INST_START_ADDR; // set PC to start of program memory
+        stack_pointer = `INIT_STACK_POINTER; // initialize sstack pointer to default position
+    end
+    else
+    begin
+        case (proc_state)
+	    //--------------------------------------------------------------------//
+	    // FETCH STAGE                                                        //
+	    // Retrieve the next instruction from memory at program counter logic //
+            //--------------------------------------------------------------------//
+            `PROC_FETCH: 
+            begin
+                mem_addr = program_counter; // point memory to current instruction
+                {rf_read, rf_write} = 2'b00; // disable register file operations
+                {mem_read, mem_write} = 2'b10; // enable memory read
+            end
+
+	    //--------------------------------------------//
+	    // DECODE STAGE                               //
+	    // Parse the instruction and prepare operands //
+            //--------------------------------------------//
+            `PROC_DECODE:
+            begin
+                // load and display current instruction
+                instruction_register = MEM_DATA;
+                print_instruction(instruction_register);
+
+                // Parse instruction fields
+                // R-type 
+		// R-type format: opcode(6) | rs(5) | rt(5) | rd(5) | shamt(5) | funct(6
+                {opcode, rs, rt, rd, shamt, funct} = instruction_register;
+                // I-type
+		// I-type format: opcode(6) | rs(5) | rt(5) | immediate(16)
+                {opcode, rs, rt, immediate} = instruction_register;
+                // J-type
+		// J-type format: opcode(6) | address(26)
+                {opcode, address} = instruction_register;
+
+                // prepare imm values
+		upper_immediate = {immediate, 16'b0}; // shift left
+                sign_extended_imm = {{16{immediate[15]}}, immediate}; // sign extend
+                zero_extended_imm = {16'b0, immediate}; // zero extend
+
+                // set reg file for reading source operands
+                rf_addr_r1 = {21'b0, rs}; // first source reg
+                rf_addr_r2 = {21'b0, rt}; // second source reg
+                {rf_read, rf_write} = 2'b10; // enable read
+
+		// prepare jump target addr
+                branch_target = {6'b0, address};
+            end
+            //------------------------------------------------//
+	    // EXECUTE STAGE                                  //
+	    // perform the operation specified by instruction //
+            //------------------------------------------------//
+            `PROC_EXE: begin
+                case(opcode)
+                    // R-Type instructions (0 opcode)
+                    6'h00: begin
+                        case(funct)
+			    // arithmetic operations
+                            6'h20: begin alu_oprn = 6'h01; alu_op1 = RF_DATA_R1; alu_op2 = RF_DATA_R2; end // add
+                            6'h22: begin alu_oprn = 6'h02; alu_op1 = RF_DATA_R1; alu_op2 = RF_DATA_R2; end // sub
+                            6'h2c: begin alu_oprn = 6'h03; alu_op1 = RF_DATA_R1; alu_op2 = RF_DATA_R2; end // mul
+			    // logical operations
+                            6'h24: begin alu_oprn = 6'h06; alu_op1 = RF_DATA_R1; alu_op2 = RF_DATA_R2; end // and
+                            6'h25: begin alu_oprn = 6'h07; alu_op1 = RF_DATA_R1; alu_op2 = RF_DATA_R2; end // or
+                            6'h27: begin alu_oprn = 6'h08; alu_op1 = RF_DATA_R1; alu_op2 = RF_DATA_R2; end // nor
+			    // comparison operation
+                            6'h2a: begin alu_oprn = 6'h09; alu_op1 = RF_DATA_R1; alu_op2 = RF_DATA_R2; end // slt
+			    // shift operations
+                            6'h01: begin alu_oprn = 6'h05; alu_op1 = RF_DATA_R1; alu_op2 = shamt; end // sll
+                            6'h02: begin alu_oprn = 6'h04; alu_op1 = RF_DATA_R1; alu_op2 = shamt; end //srl
+                            default: $display("Incorrect function code %x (%b)", funct, funct);
+                        endcase
+                    end
+
+                    // I-type instructions
+		    // immediate arithmetic ops
+                    6'h08: begin alu_oprn = 6'h01; alu_op1 = RF_DATA_R1; alu_op2 = sign_extended_imm; end  // addi
+                    6'h1d: begin alu_oprn = 6'h03; alu_op1 = RF_DATA_R1; alu_op2 = sign_extended_imm; end // muli
+		    // immediate logical operations
+                    6'h0c: begin alu_oprn = 6'h06; alu_op1 = RF_DATA_R1; alu_op2 = zero_extended_imm; end // andi
+                    6'h0d: begin alu_oprn = 6'h07; alu_op1 = RF_DATA_R1; alu_op2 = zero_extended_imm; end // ori
+                    6'h0f: ;  // LUI - handled in WB
+                    6'h0a: begin alu_oprn = 6'h09; alu_op1 = RF_DATA_R1; alu_op2 = sign_extended_imm; end //slti
+
+                    6'h04: ;  // beq
+                    6'h05: ;  // bne
+                    6'h23: ;  // lw
+                    6'h2b: ;  // sw
+                    6'h02: ;  // j
+                    6'h03: ;  // jal
+
+                    6'h1b: rf_addr_r1 = 0;  // push
+                    6'h1c: ;  // pop
+                    default: $display("Incorrect opcode %x (%b) in %x (%b)", opcode, opcode, instruction_register, instruction_register);
+                endcase
+            end
+            //---------------------------------------------------//
+	    // MEMORY STAGE                                      //
+	    // handle memory operations for load/store and stack //
+            //---------------------------------------------------//
+            `PROC_MEM: begin
+                case (opcode)
+                    6'h23: begin // lw
+                        mem_addr = RF_DATA_R1 + sign_extended_imm; // calculate address
+                        {mem_read, mem_write} = 2'b10; // memory read
+                    end
+
+                    6'h2b: begin // sw
+                        mem_addr = RF_DATA_R1 + sign_extended_imm; // Calculate effective address
+                        mem_data = RF_DATA_R2; // data to store
+                        {mem_read, mem_write} = 2'b01; // enable memory write
+                    end
+
+		    // stack operations
+                    6'h1b: begin // push
+                        mem_addr = stack_pointer; // use stack pointer as address
+                        mem_data = RF_DATA_R1; // data to push
+                        {mem_read, mem_write} = 2'b01; // enable memory write
+                        stack_pointer = stack_pointer - 1; // decrement stack point
+                    end
+
+                    6'h1c: begin // pop
+                        stack_pointer = stack_pointer + 1; // increment stack pointer
+                        mem_addr = stack_pointer; // use stack pointer as addresss
+                        {mem_read, mem_write} = 2'b10; // enable memory read
+                    end
+
+                    default: {mem_read, mem_write} = 2'b00; // no memory operation
+                endcase
+            end
+            //--------------------------------------------------------------//
+	    // WRITEBACK STAGE                                              //
+	    // update registers w/ computation result and handle pc updates //
+            //--------------------------------------------------------------//  
+            `PROC_WB: begin
+                case (opcode)
+                    6'h00: begin // r-type instruction completion
+                        rf_addr_w = rd; // write to destination register
+                        rf_data_w = ALU_RESULT; // store ALU result
+                        {rf_read, rf_write} = 2'b01; // enable register write
+                        program_counter = program_counter + 1; //increment PC
+                    end
+
+                    // i-type ALU operations completion
+                    6'h08, 6'h1d, 6'h0c, 6'h0d, 6'h0a: begin
+                        rf_addr_w = rt; // write to target register
+                        rf_data_w = ALU_RESULT; // store ALU result
+                        {rf_read, rf_write} = 2'b01; // enable register write
+                        program_counter = program_counter + 1; // increment PC
+                    end
+
+                    6'h0f: begin // LUI
+                        rf_addr_w = rt; // write to target
+                        rf_data_w = upper_immediate; // store shifted immediate
+                        {rf_read, rf_write} = 2'b01; // enable register write
+                        program_counter = program_counter + 1; // increment pc
+                    end
+
+                    // branch instruction completion
+                    6'h04: begin // BEQ
+			program_counter = program_counter + 1;
+			program_counter = program_counter + ((RF_DATA_R1 == RF_DATA_R2) ? sign_extended_imm : 0);
+			   end
+                    6'h05: begin // BNE
+			program_counter = program_counter + 1;
+			program_counter = program_counter + ((RF_DATA_R1 != RF_DATA_R2) ? sign_extended_imm : 0);
+			   end
+
+                    6'h23: begin // LW completion
+                        rf_addr_w = rt; // write to target
+                        rf_data_w = MEM_DATA; // store loaded data
+                        {rf_read, rf_write} = 2'b01; // enable register write
+                        program_counter = program_counter + 1; // increment PC
+                    end
+		    // store word completion
+                    6'h2b: program_counter = program_counter + 1;  // increment PC
+		    // jump completion
+
+                    6'h02: program_counter = branch_target;  // direct jump
+
+		    // JAL completion
+                    6'h03: begin // Jump and link
+                        rf_addr_w = `DATA_INDEX_LIMIT; // write to reg 31
+                        rf_data_w = program_counter + 1; // store return addr
+                        {rf_read, rf_write} = 2'b01; // enable register write
+                        program_counter = branch_target; // jump
+                    end
+
+		    //stack operation completion
+                    6'h1b: begin
+			program_counter = program_counter + 1;  // push: increment PC
+			   end
+                    6'h1c: begin // Pop
+                        rf_addr_w = 0; // write to reg 0
+                        rf_data_w = MEM_DATA; // store popped data
+                        program_counter = program_counter + 1; // increment PC
+                    end
+
+                    default: program_counter = program_counter + 1; // default: increment pc
+                endcase
+                // reset memory control signals
+                {mem_read, mem_write} = 2'b00;	
+            end
+
+            default: begin
+                $display("Error - state %x", proc_state);
+            end
+        endcase
+    end
+end
+
+task print_instruction;
+input [`DATA_INDEX_LIMIT:0] inst;
+
+reg [5:0]   opcode;
+reg [4:0]   rs;
+reg [4:0]   rt;
+reg [4:0]   rd;
+reg [4:0]   shamt;
+reg [5:0]   funct;
+reg [15:0]  immediate;
+reg [25:0]  address;
+
+begin
+// parse the instruction
+// R-type 
+{opcode, rs, rt, rd, shamt, funct} = inst;
+// I-type
+{opcode, rs, rt, immediate } = inst;
+// J-type
+{opcode, address} = inst;
+
+$write("@ %6dns -> [0X%08h] ", $time, inst);
+
+case(opcode)
+// R-Type
+6'h00 : begin
+            case(funct)
+                6'h20: $write("add  r%02d, r%02d, r%02d;", rd, rs, rt);
+                6'h22: $write("sub  r%02d, r%02d, r%02d;", rd, rs, rt);
+                6'h2c: $write("mul  r%02d, r%02d, r%02d;", rd, rs, rt);
+                6'h24: $write("and  r%02d, r%02d, r%02d;", rd, rs, rt);
+                6'h25: $write("or   r%02d, r%02d, r%02d;", rd, rs, rt);
+                6'h27: $write("nor  r%02d, r%02d, r%02d;", rd, rs, rt);
+                6'h2a: $write("slt  r%02d, r%02d, r%02d;", rd, rs, rt);
+                6'h01: $write("sll  r%02d, r%02d, 0X%02h;", rd, rs, shamt);
+                6'h02: $write("srl  r%02d, r%02d, 0X%02h;", rd, rs, shamt);
+                6'h08: $write("jr   r%02d;", rs);
+                default: $write("");
+            endcase
+        end
+// I-type
+6'h08 : $write("addi  r%02d, r%02d, 0X%04h;", rt, rs, immediate);
+6'h1d : $write("muli  r%02d, r%02d, 0X%04h;", rt, rs, immediate);
+6'h0c : $write("andi  r%02d, r%02d, 0X%04h;", rt, rs, immediate);
+6'h0d : $write("ori   r%02d, r%02d, 0X%04h;", rt, rs, immediate);
+6'h0f : $write("lui   r%02d, 0X%04h;", rt, immediate);
+6'h0a : $write("slti  r%02d, r%02d, 0X%04h;", rt, rs, immediate);
+6'h04 : $write("beq   r%02d, r%02d, 0X%04h;", rt, rs, immediate);
+6'h05 : $write("bne   r%02d, r%02d, 0X%04h;", rt, rs, immediate);
+6'h23 : $write("lw    r%02d, r%02d, 0X%04h;", rt, rs, immediate);
+6'h2b : $write("sw    r%02d, r%02d, 0X%04h;", rt, rs, immediate);
+// J-Type
+6'h02 : $write("jmp   0X%07h;", address);
+6'h03 : $write("jal   0X%07h;", address);
+6'h1b : $write("push;");
+6'h1c : $write("pop;");
+default: $write("");
+endcase
+$write("\n");
+end
+endtask
+
+endmodule;
+
+//------------------------------------------------------------------------------------------
+// Module: CONTROL_UNIT
+// Output: STATE      : State of the processor
+//         
+// Input:  CLK        : Clock signal
+//         RST        : Reset signal
+//
+// INOUT: MEM_DATA    : Data to be read in from or write to the memory
+//
+// Notes: - Processor continuously cycle witnin fetch, decode, execute, 
+//          memory, write back state. State values are in the prj_definition.v
+//
+// Revision History:
+//
+// Version	Date		Who		email			note
+//------------------------------------------------------------------------------------------
+//  1.0     Sep 10, 2014	Kaushik Patra	kpatra@sjsu.edu		Initial creation
+//------------------------------------------------------------------------------------------
+module PROC_SM(STATE,CLK,RST);
+// list of inputs
+input CLK, RST;
+// list of outputs
+output [2:0] STATE;
+
+reg [2:0] current_state, next_proc_state;
+
+initial
+	begin 
+	// Set first state to FETCH
+	next_proc_state = `PROC_FETCH;
+	// Start with undefined state
+	// 3'bxxx to ensure there is enough room for all states (5)
+	current_state = 3'bxxx;
+end
+
+always @(posedge CLK or negedge RST)
+	begin
+    		// on active-low reset, move to fetch state
+    		if (~RST)
+		begin
+        	current_state = 3'bxxx;
+        	next_proc_state = `PROC_FETCH;
+    	end
+
+    	else
+	begin
+        	// On clock edge, move to next planned state
+        	current_state = next_proc_state;
+
+        	// update next state
+        	case (next_proc_state)
+            		`PROC_FETCH: next_proc_state = `PROC_DECODE; // after fetch, decode
+            		`PROC_DECODE: next_proc_state = `PROC_EXE; // after decode, execute
+            		`PROC_EXE: next_proc_state = `PROC_MEM; // after execute, memory
+            		`PROC_MEM: next_proc_state = `PROC_WB; // after memory, write back
+            		`PROC_WB: next_proc_state = `PROC_FETCH; // after WB, fetch
+        	endcase
+    	end
+
+end
+
+assign STATE = current_state;
+
+endmodule

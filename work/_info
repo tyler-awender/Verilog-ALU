@@ -1,0 +1,273 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dC:/Users/Tyler/Desktop/prj_02/prj_02
+vALU
+Z1 !s110 1732678549
+!i10b 1
+!s100 z3Dl_[CKkOM:7Z_4_V=^a1
+IUbiDPElQ[T@S_a853PLbW1
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+R0
+w1732582214
+8C:/Users/Tyler/Desktop/prj_02/prj_02/alu.v
+FC:/Users/Tyler/Desktop/prj_02/prj_02/alu.v
+L0 27
+Z3 OV;L;10.5b;63
+r1
+!s85 0
+31
+Z4 !s108 1732678549.000000
+!s107 prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/alu.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/alu.v|
+!i113 1
+Z5 o-work work
+Z6 tCvgOpt 0
+n@a@l@u
+vALU_TB
+!s110 1732677990
+!i10b 1
+!s100 jNPMlNXUf;7S6E8hHd]G61
+I9cc>DWZFjNnPREV2OY2o00
+R2
+R0
+w1732677973
+8alu_tb.v
+Falu_tb.v
+L0 7
+R3
+r1
+!s85 0
+31
+!s108 1732677990.000000
+!s107 .\TESTBENCH\..\prj_definition.v|./TESTBENCH/register_file_tb.v|./TESTBENCH/mem_64MB_tb.v|./TESTBENCH/da_vinci_tb.v|register_file.v|processor.v|prj_definition.v|memory.v|da_vinci.v|control_unit.v|clk_gen.v|alu_tb.v|alu.v|
+!s90 alu.v|alu_tb.v|clk_gen.v|control_unit.v|da_vinci.v|memory.v|prj_definition.v|processor.v|register_file.v|./TESTBENCH/da_vinci_tb.v|./TESTBENCH/mem_64MB_tb.v|./TESTBENCH/register_file_tb.v|
+!i113 1
+R6
+n@a@l@u_@t@b
+vCLK_GENERATOR
+R1
+!i10b 1
+!s100 I`I=T4aaeE09lSRDFRN971
+IMY1KR=DV74S?CFY_lWOAV3
+R2
+R0
+Z7 w1730861389
+8C:/Users/Tyler/Desktop/prj_02/prj_02/clk_gen.v
+FC:/Users/Tyler/Desktop/prj_02/prj_02/clk_gen.v
+L0 16
+R3
+r1
+!s85 0
+31
+R4
+!s107 prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/clk_gen.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/clk_gen.v|
+!i113 1
+R5
+R6
+n@c@l@k_@g@e@n@e@r@a@t@o@r
+vCONTROL_UNIT
+R1
+!i10b 1
+!s100 E9F_1^T[5hQ>T4<_38[j70
+I:@96H2[LL[PCX5JR_N`=_2
+R2
+R0
+Z8 w1732678171
+Z9 8C:/Users/Tyler/Desktop/prj_02/prj_02/control_unit.v
+Z10 FC:/Users/Tyler/Desktop/prj_02/prj_02/control_unit.v
+L0 35
+R3
+r1
+!s85 0
+31
+R4
+Z11 !s107 prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/control_unit.v|
+Z12 !s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/control_unit.v|
+!i113 1
+R5
+R6
+n@c@o@n@t@r@o@l_@u@n@i@t
+vDA_VINCI
+R1
+!i10b 1
+!s100 @Cfmb0Z_T`MjRPoLI@k6C0
+I3Y1R2V7WZn;[J;^SVm^JH0
+R2
+R0
+R7
+8C:/Users/Tyler/Desktop/prj_02/prj_02/da_vinci.v
+FC:/Users/Tyler/Desktop/prj_02/prj_02/da_vinci.v
+Z13 L0 24
+R3
+r1
+!s85 0
+31
+R4
+!s107 prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/da_vinci.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/da_vinci.v|
+!i113 1
+R5
+R6
+n@d@a_@v@i@n@c@i
+vDA_VINCI_TB
+R1
+!i10b 1
+!s100 ^BUCH@T`nH3b7n?OQd:E_0
+Ib58SCIiZQMoCD=95ZgF2f1
+R2
+R0
+R7
+8C:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/da_vinci_tb.v
+FC:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/da_vinci_tb.v
+R13
+R3
+r1
+!s85 0
+31
+R4
+!s107 C:\Users\Tyler\Desktop\prj_02\prj_02\TESTBENCH\..\prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/da_vinci_tb.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/da_vinci_tb.v|
+!i113 1
+R5
+R6
+n@d@a_@v@i@n@c@i_@t@b
+vMEM_64MB_TB
+R1
+!i10b 1
+!s100 8doF=:_5B<::YCVHijTSc3
+IncXc=jOE@i>J?XFVKB8E>3
+R2
+R0
+R7
+8C:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/mem_64MB_tb.v
+FC:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/mem_64MB_tb.v
+Z14 L0 23
+R3
+r1
+!s85 0
+31
+R4
+!s107 C:\Users\Tyler\Desktop\prj_02\prj_02\TESTBENCH\..\prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/mem_64MB_tb.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/mem_64MB_tb.v|
+!i113 1
+R5
+R6
+n@m@e@m_64@m@b_@t@b
+vMEMORY_64MB
+R1
+!i10b 1
+!s100 _>e0=Tm1S9J`9iWFQMIEB3
+Igb]fT@Jd?fnVd>TO65ej]1
+R2
+R0
+R7
+8C:/Users/Tyler/Desktop/prj_02/prj_02/memory.v
+FC:/Users/Tyler/Desktop/prj_02/prj_02/memory.v
+L0 26
+R3
+r1
+!s85 0
+31
+R4
+!s107 prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/memory.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/memory.v|
+!i113 1
+R5
+R6
+n@m@e@m@o@r@y_64@m@b
+vPROC_CS147_SEC05
+R1
+!i10b 1
+!s100 hoddXg151;J@]_cW[Il_Y0
+IbC59gfiCzLZjz7XX2bb`42
+R2
+R0
+R7
+8C:/Users/Tyler/Desktop/prj_02/prj_02/processor.v
+FC:/Users/Tyler/Desktop/prj_02/prj_02/processor.v
+R14
+R3
+r1
+!s85 0
+31
+R4
+!s107 prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/processor.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/processor.v|
+!i113 1
+R5
+R6
+n@p@r@o@c_@c@s147_@s@e@c05
+vPROC_SM
+R1
+!i10b 1
+!s100 HRYo2YH?>`g>TWCGF?SlZ3
+IZz6ni38VzCJFaP_U2JzIW0
+R2
+R0
+R8
+R9
+R10
+L0 402
+R3
+r1
+!s85 0
+31
+R4
+R11
+R12
+!i113 1
+R5
+R6
+n@p@r@o@c_@s@m
+vREGISTER_FILE_32x32
+!s110 1732678911
+!i10b 1
+!s100 R=V1TSAUMnBNkCiToRJ;>2
+I@SnYQ71TRN>4Q<Ce^C??_2
+R2
+R0
+w1732678904
+8C:/Users/Tyler/Desktop/prj_02/prj_02/register_file.v
+FC:/Users/Tyler/Desktop/prj_02/prj_02/register_file.v
+L0 30
+R3
+r1
+!s85 0
+31
+!s108 1732678911.000000
+!s107 prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/register_file.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/register_file.v|
+!i113 1
+R5
+R6
+n@r@e@g@i@s@t@e@r_@f@i@l@e_32x32
+vRF_TB
+R1
+!i10b 1
+!s100 U>jCaUkbFH?cFeiAV8B`a1
+Ii?5W?1MAa84=@cAl`dmJ:3
+R2
+R0
+w1731034650
+8C:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/register_file_tb.v
+FC:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/register_file_tb.v
+R13
+R3
+r1
+!s85 0
+31
+R4
+!s107 C:\Users\Tyler\Desktop\prj_02\prj_02\TESTBENCH\..\prj_definition.v|C:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/register_file_tb.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Tyler/Desktop/prj_02/prj_02/TESTBENCH/register_file_tb.v|
+!i113 1
+R5
+R6
+n@r@f_@t@b
